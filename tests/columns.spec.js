@@ -192,30 +192,13 @@ test.describe('TechCrunch column', () => {
     await expect(firstLink).toHaveAttribute('href', 'https://techcrunch.com/article-1');
   });
 
-  test('HTML is stripped from descriptions', async ({ page }) => {
+  test('no description elements in TC column', async ({ page }) => {
     await setupHappyPathRoutes(page);
     await page.goto('/columns.html');
 
-    const description = page.locator('#tc ol li:nth-child(1) .description');
-    await expect(description).toHaveText('This is a bold description with HTML.');
-  });
-
-  test('plain text descriptions render as-is', async ({ page }) => {
-    await setupHappyPathRoutes(page);
-    await page.goto('/columns.html');
-
-    const description = page.locator('#tc ol li:nth-child(2) .description');
-    await expect(description).toHaveText('Plain text description here.');
-  });
-
-  test('empty descriptions produce no .description element', async ({ page }) => {
-    await setupHappyPathRoutes(page);
-    await page.goto('/columns.html');
-
-    const thirdItem = page.locator('#tc ol li:nth-child(3)');
-    await expect(thirdItem).toBeVisible();
-    const description = thirdItem.locator('.description');
-    await expect(description).toHaveCount(0);
+    await expect(page.locator('#tc ol li')).toHaveCount(3);
+    const descriptions = page.locator('#tc .description');
+    await expect(descriptions).toHaveCount(0);
   });
 });
 

@@ -179,7 +179,10 @@
           link = entry.querySelector('link')?.textContent || '';
           descriptionRaw = entry.querySelector('description')?.textContent || '';
         }
-        const description = descriptionRaw.replace(/<[^>]*>/g, '').trim();
+        let description = descriptionRaw.replace(/<[^>]*>/g, '').trim();
+        if (isAtom) {
+          description = description.replace(/\s*Discussion\s*\|\s*Link\s*$/, '');
+        }
         results.push({
           title,
           url: link,
@@ -189,12 +192,15 @@
       return results;
     }
 
-    async function loadRssFeed(containerId, feedUrl, sourceName) {
+    async function loadRssFeed(containerId, feedUrl, sourceName, { showDescriptions = true } = {}) {
       const container = document.getElementById(containerId);
       try {
         const response = await fetchWithTimeout(CORS_PROXY + encodeURIComponent(feedUrl));
         const xml = await response.text();
         const items = parseFeed(xml);
+        if (!showDescriptions) {
+          for (const item of items) item.description = null;
+        }
         renderList(container, items);
       } catch {
         renderError(container, sourceName);
@@ -202,7 +208,7 @@
     }
 
     loadHackerNews();
-    loadRssFeed('tc', 'https://techcrunch.com/feed/', 'TechCrunch');
+    loadRssFeed('tc', 'https://techcrunch.com/feed/', 'TechCrunch', { showDescriptions: false });
     loadRssFeed('ph', 'https://www.producthunt.com/feed', 'Product Hunt');
   </script>
 </body>

@@ -5,11 +5,11 @@
   <entry>
     <title>PH Product One</title>
     <link href="https://www.producthunt.com/posts/product-one" rel="alternate"/>
-    <content type="html">First product description.</content>
+    <content type="html">First product description. &lt;a&gt;Discussion&lt;/a&gt; | &lt;a&gt;Link&lt;/a&gt;</content>
   </entry>
   <entry>
     <title>PH Product Two</title>
     <link href="https://www.producthunt.com/posts/product-two" rel="alternate"/>
-    <content type="html">Second product description.</content>
+    <content type="html">Second product description. &lt;a&gt;Discussion&lt;/a&gt; | &lt;a&gt;Link&lt;/a&gt;</content>
   </entry>
 </feed>
