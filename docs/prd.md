@@ -8,7 +8,7 @@ Columns is a single-file browser homepage that displays the current front page l
 
 - Replace the default browser homepage with a single view of three key tech news sources.
 - Zero infrastructure: no server, no build step, no dependencies. One HTML file opened locally.
-- Minimal UI: only titles, links, and descriptions (if available).
+- Minimal UI: titles and links for all sources; descriptions shown beneath each item for RSS feeds (TechCrunch, Product Hunt) where available.
 
 ## Non-requirements
 
@@ -64,7 +64,9 @@ Parse the XML response using the browser's built-in `DOMParser`. Extract `<item>
 |   Hacker News     |   TechCrunch      |   Product Hunt    |
 +-------------------+-------------------+-------------------+
 | 1. Link title     | 1. Link title     | 1. Link title     |
+|                   |    Description…   |    Description…   |
 | 2. Link title     | 2. Link title     | 2. Link title     |
+|                   |    Description…   |    Description…   |
 | ...               | ...               | ...               |
 +-------------------+-------------------+-------------------+
 ```
