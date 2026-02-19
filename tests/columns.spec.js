@@ -14,6 +14,21 @@ const hnItemAsk = readFixture('hn-item-ask.json');
 const techcrunchXml = readFixture('techcrunch.xml');
 const producthuntXml = readFixture('producthunt.xml');
 
+const FALLBACK_PROXY_PATTERNS = [
+  '**/api.codetabs.com/**',
+  '**/api.allorigins.win/**',
+];
+
+function fulfillRssByUrl(route, url) {
+  if (url.includes('techcrunch.com')) {
+    return route.fulfill({ contentType: 'application/xml', body: techcrunchXml });
+  }
+  if (url.includes('producthunt.com')) {
+    return route.fulfill({ contentType: 'application/xml', body: producthuntXml });
+  }
+  return route.abort();
+}
+
 async function setupHappyPathRoutes(page) {
   await page.route('**/hacker-news.firebaseio.com/v0/topstories.json', (route) =>
     route.fulfill({ contentType: 'application/json', body: hnIds }),
@@ -32,16 +47,22 @@ async function setupHappyPathRoutes(page) {
     return route.fulfill({ contentType: 'application/json', body: JSON.stringify(item) });
   });
 
-  await page.route('**/api.cors.lol/**', (route) => {
-    const url = route.request().url();
-    if (url.includes('techcrunch.com')) {
-      return route.fulfill({ contentType: 'application/xml', body: techcrunchXml });
-    }
-    if (url.includes('producthunt.com')) {
-      return route.fulfill({ contentType: 'application/xml', body: producthuntXml });
-    }
-    return route.abort();
-  });
+  // First proxy succeeds — fallbacks should never be reached
+  await page.route('**/api.cors.lol/**', (route) =>
+    fulfillRssByUrl(route, route.request().url()),
+  );
+
+  // Block fallback proxies so tests fail fast if first proxy is accidentally skipped
+  for (const pattern of FALLBACK_PROXY_PATTERNS) {
+    await page.route(pattern, (route) => route.abort());
+  }
+}
+
+async function blockAllProxies(page, handler) {
+  await page.route('**/api.cors.lol/**', handler);
+  for (const pattern of FALLBACK_PROXY_PATTERNS) {
+    await page.route(pattern, handler);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -102,7 +123,7 @@ test.describe('loading states', () => {
     await page.route('**/hacker-news.firebaseio.com/**', (route) => {
       // Never fulfill — keeps loading state visible
     });
-    await page.route('**/api.cors.lol/**', (route) => {
+    await blockAllProxies(page, (route) => {
       // Never fulfill
     });
 
@@ -245,16 +266,13 @@ test.describe('Product Hunt column', () => {
 test.describe('error states', () => {
   test('shows error when Hacker News fails', async ({ page }) => {
     await page.route('**/hacker-news.firebaseio.com/**', (route) => route.abort());
-    // Keep RSS feeds working
-    await page.route('**/api.cors.lol/**', (route) => {
-      const url = route.request().url();
-      if (url.includes('techcrunch.com')) {
-        return route.fulfill({ contentType: 'application/xml', body: techcrunchXml });
-      }
-      if (url.includes('producthunt.com')) {
-        return route.fulfill({ contentType: 'application/xml', body: producthuntXml });
-      }
-    });
+    // Keep RSS feeds working via first proxy
+    await page.route('**/api.cors.lol/**', (route) =>
+      fulfillRssByUrl(route, route.request().url()),
+    );
+    for (const pattern of FALLBACK_PROXY_PATTERNS) {
+      await page.route(pattern, (route) => route.abort());
+    }
 
     await page.goto('/columns.html');
 
@@ -272,15 +290,19 @@ test.describe('error states', () => {
       const item = JSON.parse(hnItem);
       return route.fulfill({ contentType: 'application/json', body: JSON.stringify(item) });
     });
-    await page.route('**/api.cors.lol/**', (route) => {
+    // All proxies fail for TechCrunch, succeed for Product Hunt
+    const rssHandler = (route) => {
       const url = route.request().url();
-      if (url.includes('techcrunch.com')) {
-        return route.abort();
-      }
+      if (url.includes('techcrunch.com')) return route.abort();
       if (url.includes('producthunt.com')) {
         return route.fulfill({ contentType: 'application/xml', body: producthuntXml });
       }
-    });
+      return route.abort();
+    };
+    await page.route('**/api.cors.lol/**', rssHandler);
+    for (const pattern of FALLBACK_PROXY_PATTERNS) {
+      await page.route(pattern, rssHandler);
+    }
 
     await page.goto('/columns.html');
 
@@ -297,15 +319,19 @@ test.describe('error states', () => {
       const item = JSON.parse(hnItem);
       return route.fulfill({ contentType: 'application/json', body: JSON.stringify(item) });
     });
-    await page.route('**/api.cors.lol/**', (route) => {
+    // All proxies fail for Product Hunt, succeed for TechCrunch
+    const rssHandler = (route) => {
       const url = route.request().url();
       if (url.includes('techcrunch.com')) {
         return route.fulfill({ contentType: 'application/xml', body: techcrunchXml });
       }
-      if (url.includes('producthunt.com')) {
-        return route.abort();
-      }
-    });
+      if (url.includes('producthunt.com')) return route.abort();
+      return route.abort();
+    };
+    await page.route('**/api.cors.lol/**', rssHandler);
+    for (const pattern of FALLBACK_PROXY_PATTERNS) {
+      await page.route(pattern, rssHandler);
+    }
 
     await page.goto('/columns.html');
 
@@ -320,7 +346,7 @@ test.describe('error states', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('timeout handling', () => {
-  test('shows error when request exceeds 10 seconds', async ({ page }) => {
+  test('shows error when request exceeds timeout across all proxies', async ({ page }) => {
     // Install fake timers before navigating
     await page.clock.install();
 
@@ -329,18 +355,57 @@ test.describe('timeout handling', () => {
       // Never fulfill — the abort signal will cancel this
     });
 
-    // RSS feeds also hang
-    await page.route('**/api.cors.lol/**', async (route) => {
+    // RSS feeds also hang across all proxies
+    await blockAllProxies(page, async (route) => {
       // Never fulfill
     });
 
     await page.goto('/columns.html');
 
-    // Advance time past the 10s timeout
-    await page.clock.fastForward(11000);
+    // Advance time in steps so each sequential proxy timeout fires
+    // and the next proxy attempt can schedule its own timeout
+    for (let i = 0; i < 3; i++) {
+      await page.clock.fastForward(11000);
+    }
 
     await expect(page.locator('#hn .status.error')).toHaveText('Failed to load Hacker News');
     await expect(page.locator('#tc .status.error')).toHaveText('Failed to load TechCrunch');
     await expect(page.locator('#ph .status.error')).toHaveText('Failed to load Product Hunt');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Proxy fallback
+// ---------------------------------------------------------------------------
+
+test.describe('proxy fallback', () => {
+  test('falls back to next proxy when first proxy fails', async ({ page }) => {
+    // HN routes work normally
+    await page.route('**/hacker-news.firebaseio.com/v0/topstories.json', (route) =>
+      route.fulfill({ contentType: 'application/json', body: hnIds }),
+    );
+    await page.route('**/hacker-news.firebaseio.com/v0/item/*.json', (route) => {
+      const item = JSON.parse(hnItem);
+      item.id = 1;
+      item.title = 'Test Story 1';
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify(item) });
+    });
+
+    // First proxy fails
+    await page.route('**/api.cors.lol/**', (route) => route.abort());
+
+    // Second proxy succeeds
+    await page.route('**/api.codetabs.com/**', (route) =>
+      fulfillRssByUrl(route, route.request().url()),
+    );
+
+    // Third proxy not needed but block it to be safe
+    await page.route('**/api.allorigins.win/**', (route) => route.abort());
+
+    await page.goto('/columns.html');
+
+    // RSS columns should render via the second proxy
+    await expect(page.locator('#tc ol li')).toHaveCount(3);
+    await expect(page.locator('#ph ol li')).toHaveCount(2);
   });
 });

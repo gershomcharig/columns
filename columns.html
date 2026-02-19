@@ -99,7 +99,11 @@
   </div>
 
   <script>
-    const CORS_PROXY = 'https://api.cors.lol/?url=';
+    const CORS_PROXIES = [
+      (url) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
+      (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+      (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    ];
     const FETCH_TIMEOUT_MS = 10000;
     const MAX_ITEMS = 30;
 
@@ -108,6 +112,18 @@
       const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
       return fetch(url, { signal: controller.signal })
         .finally(() => clearTimeout(timeout));
+    }
+
+    async function fetchViaProxy(feedUrl) {
+      for (const buildUrl of CORS_PROXIES) {
+        try {
+          const response = await fetchWithTimeout(buildUrl(feedUrl));
+          if (response.ok) return response;
+        } catch {
+          // Try next proxy
+        }
+      }
+      throw new Error('All proxies failed');
     }
 
     function renderList(container, items) {
@@ -195,7 +211,7 @@
     async function loadRssFeed(containerId, feedUrl, sourceName, { showDescriptions = true } = {}) {
       const container = document.getElementById(containerId);
       try {
-        const response = await fetchWithTimeout(CORS_PROXY + encodeURIComponent(feedUrl));
+        const response = await fetchViaProxy(feedUrl);
         const xml = await response.text();
         const items = parseFeed(xml);
         if (!showDescriptions) {
