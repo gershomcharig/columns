@@ -32,8 +32,9 @@ RSS feeds from TechCrunch and Product Hunt do not serve CORS headers. A third-pa
 
 Candidate proxies (in order of preference):
 
-1. `https://api.allorigins.win/raw?url=`
-2. `https://corsproxy.io/?url=`
+1. `https://api.cors.lol/?url=`
+2. `https://api.allorigins.win/raw?url=`
+3. `https://corsproxy.io/?url=`
 
 If the chosen proxy becomes unreliable, swap the base URL constant to another proxy. The proxy URL must be defined in a single constant at the top of the script so it can be changed in one place.
 
@@ -44,9 +45,9 @@ If the chosen proxy becomes unreliable, swap the base URL constant to another pr
 3. Fetch each item via `https://hacker-news.firebaseio.com/v0/item/{id}.json`.
 4. Use the `title` and `url` fields. If `url` is absent (Ask HN, Show HN text posts), link to `https://news.ycombinator.com/item?id={id}` instead.
 
-### RSS feed parsing
+### RSS / Atom feed parsing
 
-Parse the XML response using the browser's built-in `DOMParser`. Extract `<item>` elements and read their `<title>` and `<link>` child elements. Display up to 30 items per feed.
+Parse the XML response using the browser's built-in `DOMParser`. Detect the format by checking the root element: `<rss>` for RSS, `<feed>` for Atom. For RSS, extract `<item>` elements and read `<title>`, `<link>` text, and `<description>`. For Atom, extract `<entry>` elements and read `<title>`, `<link rel="alternate">` `href`, and `<content>`. Display up to 30 items per feed.
 
 ## Technical specification
 

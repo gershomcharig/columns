@@ -32,7 +32,7 @@ async function setupHappyPathRoutes(page) {
     return route.fulfill({ contentType: 'application/json', body: JSON.stringify(item) });
   });
 
-  await page.route('**/api.allorigins.win/raw**', (route) => {
+  await page.route('**/api.cors.lol/**', (route) => {
     const url = route.request().url();
     if (url.includes('techcrunch.com')) {
       return route.fulfill({ contentType: 'application/xml', body: techcrunchXml });
@@ -102,7 +102,7 @@ test.describe('loading states', () => {
     await page.route('**/hacker-news.firebaseio.com/**', (route) => {
       // Never fulfill — keeps loading state visible
     });
-    await page.route('**/api.allorigins.win/**', (route) => {
+    await page.route('**/api.cors.lol/**', (route) => {
       // Never fulfill
     });
 
@@ -263,7 +263,7 @@ test.describe('error states', () => {
   test('shows error when Hacker News fails', async ({ page }) => {
     await page.route('**/hacker-news.firebaseio.com/**', (route) => route.abort());
     // Keep RSS feeds working
-    await page.route('**/api.allorigins.win/raw**', (route) => {
+    await page.route('**/api.cors.lol/**', (route) => {
       const url = route.request().url();
       if (url.includes('techcrunch.com')) {
         return route.fulfill({ contentType: 'application/xml', body: techcrunchXml });
@@ -289,7 +289,7 @@ test.describe('error states', () => {
       const item = JSON.parse(hnItem);
       return route.fulfill({ contentType: 'application/json', body: JSON.stringify(item) });
     });
-    await page.route('**/api.allorigins.win/raw**', (route) => {
+    await page.route('**/api.cors.lol/**', (route) => {
       const url = route.request().url();
       if (url.includes('techcrunch.com')) {
         return route.abort();
@@ -314,7 +314,7 @@ test.describe('error states', () => {
       const item = JSON.parse(hnItem);
       return route.fulfill({ contentType: 'application/json', body: JSON.stringify(item) });
     });
-    await page.route('**/api.allorigins.win/raw**', (route) => {
+    await page.route('**/api.cors.lol/**', (route) => {
       const url = route.request().url();
       if (url.includes('techcrunch.com')) {
         return route.fulfill({ contentType: 'application/xml', body: techcrunchXml });
@@ -347,7 +347,7 @@ test.describe('timeout handling', () => {
     });
 
     // RSS feeds also hang
-    await page.route('**/api.allorigins.win/**', async (route) => {
+    await page.route('**/api.cors.lol/**', async (route) => {
       // Never fulfill
     });
 

@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <title>Product Hunt</title>
-    <link>https://www.producthunt.com</link>
-    <item>
-      <title>PH Product One</title>
-      <link>https://www.producthunt.com/posts/product-one</link>
-      <description>First product description.</description>
-    </item>
-    <item>
-      <title>PH Product Two</title>
-      <link>https://www.producthunt.com/posts/product-two</link>
-      <description>Second product description.</description>
-    </item>
-  </channel>
-</rss>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Product Hunt</title>
+  <link href="https://www.producthunt.com" rel="alternate"/>
+  <entry>
+    <title>PH Product One</title>
+    <link href="https://www.producthunt.com/posts/product-one" rel="alternate"/>
+    <content type="html">First product description.</content>
+  </entry>
+  <entry>
+    <title>PH Product Two</title>
+    <link href="https://www.producthunt.com/posts/product-two" rel="alternate"/>
+    <content type="html">Second product description.</content>
+  </entry>
+</feed>

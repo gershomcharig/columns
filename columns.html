@@ -99,7 +99,7 @@
   </div>
 
   <script>
-    const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+    const CORS_PROXY = 'https://api.cors.lol/?url=';
     const FETCH_TIMEOUT_MS = 10000;
     const MAX_ITEMS = 30;
 
@@ -158,16 +158,27 @@
       }
     }
 
-    function parseRss(xml) {
+    function parseFeed(xml) {
       const parser = new DOMParser();
       const doc = parser.parseFromString(xml, 'text/xml');
-      const items = doc.querySelectorAll('item');
+      const isAtom = doc.documentElement.tagName === 'feed';
+      const entries = doc.querySelectorAll(isAtom ? 'entry' : 'item');
       const results = [];
-      for (let i = 0; i < Math.min(items.length, MAX_ITEMS); i++) {
-        const item = items[i];
-        const title = item.querySelector('title')?.textContent || '';
-        const link = item.querySelector('link')?.textContent || '';
-        const descriptionRaw = item.querySelector('description')?.textContent || '';
+      for (let i = 0; i < Math.min(entries.length, MAX_ITEMS); i++) {
+        const entry = entries[i];
+        const title = entry.querySelector('title')?.textContent || '';
+        let link = '';
+        let descriptionRaw = '';
+        if (isAtom) {
+          const linkEl = entry.querySelector('link[rel="alternate"]')
+            || entry.querySelector('link');
+          link = linkEl?.getAttribute('href') || '';
+          descriptionRaw = entry.querySelector('content')?.textContent
+            || entry.querySelector('summary')?.textContent || '';
+        } else {
+          link = entry.querySelector('link')?.textContent || '';
+          descriptionRaw = entry.querySelector('description')?.textContent || '';
+        }
         const description = descriptionRaw.replace(/<[^>]*>/g, '').trim();
         results.push({
           title,
@@ -183,7 +194,7 @@
       try {
         const response = await fetchWithTimeout(CORS_PROXY + encodeURIComponent(feedUrl));
         const xml = await response.text();
-        const items = parseRss(xml);
+        const items = parseFeed(xml);
         renderList(container, items);
       } catch {
         renderError(container, sourceName);
