@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Product Hunt</title>
+    <link>https://www.producthunt.com</link>
+    <item>
+      <title>PH Product One</title>
+      <link>https://www.producthunt.com/posts/product-one</link>
+      <description>First product description.</description>
+    </item>
+    <item>
+      <title>PH Product Two</title>
+      <link>https://www.producthunt.com/posts/product-two</link>
+      <description>Second product description.</description>
+    </item>
+  </channel>
+</rss>

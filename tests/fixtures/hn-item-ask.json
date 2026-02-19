@@ -1,0 +1,10 @@
+{
+  "id": 2,
+  "type": "story",
+  "title": "Ask HN: Test Question",
+  "text": "This is an Ask HN post with no URL field.",
+  "score": 75,
+  "by": "askuser",
+  "time": 1700000001,
+  "descendants": 30
+}

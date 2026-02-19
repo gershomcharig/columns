@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>TechCrunch</title>
+    <link>https://techcrunch.com</link>
+    <item>
+      <title>TC Article With HTML Description</title>
+      <link>https://techcrunch.com/article-1</link>
+      <description>&lt;p&gt;This is a &lt;strong&gt;bold&lt;/strong&gt; description with HTML.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>TC Article With Plain Description</title>
+      <link>https://techcrunch.com/article-2</link>
+      <description>Plain text description here.</description>
+    </item>
+    <item>
+      <title>TC Article No Description</title>
+      <link>https://techcrunch.com/article-3</link>
+      <description></description>
+    </item>
+  </channel>
+</rss>

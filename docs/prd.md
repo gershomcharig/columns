@@ -104,6 +104,15 @@ Parse the XML response using the browser's built-in `DOMParser`. Extract `<item>
 columns.html    ← the entire application
 ```
 
+## Testing
+
+End-to-end tests verify the full rendering pipeline using Playwright with mocked network requests.
+
+- **Run tests:** `npm test`
+- **Requirement:** tests must pass after every change to `columns.html`.
+- **All network requests are mocked** — tests never hit live APIs or RSS feeds. Fixture data lives in `tests/fixtures/`.
+- **Coverage:** layout, loading states, data rendering (all three columns), error states, and timeout handling.
+
 ## Future considerations (out of scope)
 
 - Dark mode / system theme matching.

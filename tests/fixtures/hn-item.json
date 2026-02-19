@@ -1,0 +1,10 @@
+{
+  "id": 1,
+  "type": "story",
+  "title": "Test Story Title",
+  "url": "https://example.com/story",
+  "score": 100,
+  "by": "testuser",
+  "time": 1700000000,
+  "descendants": 50
+}
