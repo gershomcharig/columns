@@ -12,7 +12,7 @@ const hnIds = readFixture('hn-ids.json');
 const hnItem = readFixture('hn-item.json');
 const hnItemAsk = readFixture('hn-item-ask.json');
 const techcrunchXml = readFixture('techcrunch.xml');
-const producthuntXml = readFixture('producthunt.xml');
+const bubblesXml = readFixture('bubbles.xml');
 
 const FALLBACK_PROXY_PATTERNS = [
   '**/api.codetabs.com/**',
@@ -23,8 +23,8 @@ function fulfillRssByUrl(route, url) {
   if (url.includes('techcrunch.com')) {
     return route.fulfill({ contentType: 'application/xml', body: techcrunchXml });
   }
-  if (url.includes('producthunt.com')) {
-    return route.fulfill({ contentType: 'application/xml', body: producthuntXml });
+  if (url.includes('bubbles.town')) {
+    return route.fulfill({ contentType: 'application/xml', body: bubblesXml });
   }
   return route.abort();
 }
@@ -80,7 +80,7 @@ test.describe('layout', () => {
     const headings = page.locator('.column h2');
     await expect(headings.nth(0)).toHaveText('Hacker News');
     await expect(headings.nth(1)).toHaveText('TechCrunch');
-    await expect(headings.nth(2)).toHaveText('Product Hunt');
+    await expect(headings.nth(2)).toHaveText('Bubbles');
   });
 
   test('grid uses three equal columns with min-width 1200px', async ({ page }) => {
@@ -131,7 +131,7 @@ test.describe('loading states', () => {
 
     await expect(page.locator('#hn .status')).toHaveText('Loading…');
     await expect(page.locator('#tc .status')).toHaveText('Loading…');
-    await expect(page.locator('#ph .status')).toHaveText('Loading…');
+    await expect(page.locator('#bubbles .status')).toHaveText('Loading…');
   });
 });
 
@@ -224,33 +224,39 @@ test.describe('TechCrunch column', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Product Hunt column
+// Bubbles column
 // ---------------------------------------------------------------------------
 
-test.describe('Product Hunt column', () => {
+test.describe('Bubbles column', () => {
   test('renders independently with correct content', async ({ page }) => {
     await setupHappyPathRoutes(page);
     await page.goto('/columns.html');
 
-    const items = page.locator('#ph ol li');
+    const items = page.locator('#bubbles ol li');
     await expect(items).toHaveCount(2);
 
-    const firstLink = page.locator('#ph ol li:nth-child(1) a');
-    await expect(firstLink).toHaveText('PH Product One');
-    await expect(firstLink).toHaveAttribute('href', 'https://www.producthunt.com/posts/product-one');
+    const firstLink = page.locator('#bubbles ol li:nth-child(1) a');
+    await expect(firstLink).toHaveText('Bubbles Post One');
+    await expect(firstLink).toHaveAttribute('href', 'https://example.com/posts/bubbles-one');
 
-    const firstDesc = page.locator('#ph ol li:nth-child(1) .description');
-    await expect(firstDesc).toHaveText('First product description.');
+    const secondLink = page.locator('#bubbles ol li:nth-child(2) a');
+    await expect(secondLink).toHaveText('Bubbles Post Two');
+  });
 
-    const secondLink = page.locator('#ph ol li:nth-child(2) a');
-    await expect(secondLink).toHaveText('PH Product Two');
+  test('no description elements in Bubbles column', async ({ page }) => {
+    await setupHappyPathRoutes(page);
+    await page.goto('/columns.html');
+
+    await expect(page.locator('#bubbles ol li')).toHaveCount(2);
+    const descriptions = page.locator('#bubbles .description');
+    await expect(descriptions).toHaveCount(0);
   });
 
   test('all links open in new tab with security attributes', async ({ page }) => {
     await setupHappyPathRoutes(page);
     await page.goto('/columns.html');
 
-    const links = page.locator('#ph ol li a');
+    const links = page.locator('#bubbles ol li a');
     const count = await links.count();
     for (let i = 0; i < count; i++) {
       await expect(links.nth(i)).toHaveAttribute('target', '_blank');
@@ -279,7 +285,7 @@ test.describe('error states', () => {
     await expect(page.locator('#hn .status.error')).toHaveText('Failed to load Hacker News');
     // Other columns still work
     await expect(page.locator('#tc ol li')).toHaveCount(3);
-    await expect(page.locator('#ph ol li')).toHaveCount(2);
+    await expect(page.locator('#bubbles ol li')).toHaveCount(2);
   });
 
   test('shows error when TechCrunch fails', async ({ page }) => {
@@ -290,12 +296,12 @@ test.describe('error states', () => {
       const item = JSON.parse(hnItem);
       return route.fulfill({ contentType: 'application/json', body: JSON.stringify(item) });
     });
-    // All proxies fail for TechCrunch, succeed for Product Hunt
+    // All proxies fail for TechCrunch, succeed for Bubbles
     const rssHandler = (route) => {
       const url = route.request().url();
       if (url.includes('techcrunch.com')) return route.abort();
-      if (url.includes('producthunt.com')) {
-        return route.fulfill({ contentType: 'application/xml', body: producthuntXml });
+      if (url.includes('bubbles.town')) {
+        return route.fulfill({ contentType: 'application/xml', body: bubblesXml });
       }
       return route.abort();
     };
@@ -308,10 +314,10 @@ test.describe('error states', () => {
 
     await expect(page.locator('#tc .status.error')).toHaveText('Failed to load TechCrunch');
     await expect(page.locator('#hn ol li')).toHaveCount(30);
-    await expect(page.locator('#ph ol li')).toHaveCount(2);
+    await expect(page.locator('#bubbles ol li')).toHaveCount(2);
   });
 
-  test('shows error when Product Hunt fails', async ({ page }) => {
+  test('shows error when Bubbles fails', async ({ page }) => {
     await page.route('**/hacker-news.firebaseio.com/v0/topstories.json', (route) =>
       route.fulfill({ contentType: 'application/json', body: hnIds }),
     );
@@ -319,13 +325,13 @@ test.describe('error states', () => {
       const item = JSON.parse(hnItem);
       return route.fulfill({ contentType: 'application/json', body: JSON.stringify(item) });
     });
-    // All proxies fail for Product Hunt, succeed for TechCrunch
+    // All proxies fail for Bubbles, succeed for TechCrunch
     const rssHandler = (route) => {
       const url = route.request().url();
       if (url.includes('techcrunch.com')) {
         return route.fulfill({ contentType: 'application/xml', body: techcrunchXml });
       }
-      if (url.includes('producthunt.com')) return route.abort();
+      if (url.includes('bubbles.town')) return route.abort();
       return route.abort();
     };
     await page.route('**/api.cors.lol/**', rssHandler);
@@ -335,7 +341,7 @@ test.describe('error states', () => {
 
     await page.goto('/columns.html');
 
-    await expect(page.locator('#ph .status.error')).toHaveText('Failed to load Product Hunt');
+    await expect(page.locator('#bubbles .status.error')).toHaveText('Failed to load Bubbles');
     await expect(page.locator('#hn ol li')).toHaveCount(30);
     await expect(page.locator('#tc ol li')).toHaveCount(3);
   });
@@ -370,7 +376,7 @@ test.describe('timeout handling', () => {
 
     await expect(page.locator('#hn .status.error')).toHaveText('Failed to load Hacker News');
     await expect(page.locator('#tc .status.error')).toHaveText('Failed to load TechCrunch');
-    await expect(page.locator('#ph .status.error')).toHaveText('Failed to load Product Hunt');
+    await expect(page.locator('#bubbles .status.error')).toHaveText('Failed to load Bubbles');
   });
 });
 
@@ -406,6 +412,6 @@ test.describe('proxy fallback', () => {
 
     // RSS columns should render via the second proxy
     await expect(page.locator('#tc ol li')).toHaveCount(3);
-    await expect(page.locator('#ph ol li')).toHaveCount(2);
+    await expect(page.locator('#bubbles ol li')).toHaveCount(2);
   });
 });

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Bubbles</title>
+  <link href="https://bubbles.town" rel="alternate"/>
+  <entry>
+    <title>Bubbles Post One</title>
+    <link href="https://example.com/posts/bubbles-one" rel="alternate" type="text/html"/>
+    <content type="html">&lt;p&gt;Full article body would be here.&lt;/p&gt;</content>
+  </entry>
+  <entry>
+    <title>Bubbles Post Two</title>
+    <link href="https://example.com/posts/bubbles-two" rel="alternate" type="text/html"/>
+    <content type="html">&lt;p&gt;Another full article.&lt;/p&gt;</content>
+  </entry>
+</feed>
